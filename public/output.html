@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<title>OverlayPLAY - Output</title>
+<style>
+  body { margin:0; background:transparent; overflow:hidden; font-family:Arial,sans-serif; }
+
+  .overlayRoot {
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: 1920px;
+    height: 1080px;
+    pointer-events: none;
+  }
+
+  .posLayer {
+    position:absolute;
+    left:50%;
+    bottom:80px;
+    transform: translateX(-50%);
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+  }
+
+  .animLayer {
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:0px;
+    opacity:1;
+  }
+
+  .row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0px;
+  }
+
+  .logoBox {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    flex-shrink: 0;
+    position: relative;
+  }
+
+  .logoBox img {
+    max-width: 80%;
+    max-height: 80%;
+    object-fit: contain;
+    filter: drop-shadow(0px 4px 10px rgba(0,0,0,0.6));
+  }
+
+  .logoDivider {
+    position: absolute;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    width: 0px;
+    background: transparent;
+  }
+
+  .zocalo {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10px 30px;
+    font-weight: 900;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    box-sizing: border-box;
+    white-space: nowrap;
+    overflow: hidden;
+  }
+
+  .zocalo2 {
+    padding: 8px 22px;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    box-sizing: border-box;
+    white-space: nowrap;
+    overflow: hidden;
+    display: none;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .bordered { border-style: solid; }
+
+  .rounded { border-radius: 18px; }
+  .square { border-radius: 0px; }
+
+  /* ANIMACIONES */
+  .fadeIn { animation: fadeIn ease forwards; }
+  .fadeOut { animation: fadeOut ease forwards; }
+
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0px);} }
+  @keyframes fadeOut { from { opacity: 1; transform: translateY(0px);} to { opacity: 0; transform: translateY(20px);} }
+
+  /* SLIDE UP = ENTRA DESDE ABAJO */
+  .slideUpIn { animation: slideUpIn ease forwards; }
+  @keyframes slideUpIn { from { opacity: 0; transform: translateY(90px);} to { opacity: 1; transform: translateY(0px);} }
+
+  /* SLIDE DOWN OUT = SALE HACIA ABAJO */
+  .slideDownOut { animation: slideDownOut ease forwards; }
+  @keyframes slideDownOut { from { opacity: 1; transform: translateY(0px);} to { opacity: 0; transform: translateY(90px);} }
+
+  /* SLIDE LEFT IN = ENTRA DESDE DERECHA */
+  .slideLeftIn { animation: slideLeftIn ease forwards; }
+  @keyframes slideLeftIn { from { opacity: 0; transform: translateX(120px); } to { opacity: 1; transform: translateX(0px);} }
+
+  /* SLIDE RIGHT OUT = SALE HACIA DERECHA */
+  .slideRightOut { animation: slideRightOut ease forwards; }
+  @keyframes slideRightOut { from { opacity: 1; transform: translateX(0px);} to { opacity: 0; transform: translateX(120px); } }
+
+  /* SLIDE RIGHT IN = ENTRA DESDE IZQUIERDA */
+  .slideRightIn { animation: slideRightIn ease forwards; }
+  @keyframes slideRightIn { from { opacity: 0; transform: translateX(-120px); } to { opacity: 1; transform: translateX(0px);} }
+
+  /* SLIDE LEFT OUT = SALE HACIA IZQUIERDA */
+  .slideLeftOut { animation: slideLeftOut ease forwards; }
+  @keyframes slideLeftOut { from { opacity: 1; transform: translateX(0px);} to { opacity: 0; transform: translateX(-120px); } }
+</style>
+</head>
+<body>
+
+<div class="overlayRoot">
+  <div class="posLayer" id="posLayer">
+    <div class="animLayer" id="animLayer">
+
+      <div class="row" id="row1">
+        <div class="logoBox bordered rounded" id="logoBox">
+          <div class="logoDivider" id="logoDivider"></div>
+          <img id="logoImg" src="" />
+        </div>
+
+        <div class="zocalo bordered rounded" id="zocalo1">
+          <span id="text1"></span>
+        </div>
+      </div>
+
+      <div class="row" id="row2">
+        <div class="zocalo2 bordered rounded" id="zocalo2">
+          <span id="text2"></span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+  // FIX Render: si es https => wss
+  const ws = new WebSocket(`${location.protocol === "https:" ? "wss" : "ws"}://${location.host}`);
+
+  const posLayer = document.getElementById("posLayer");
+  const animLayer = document.getElementById("animLayer");
+
+  const row2 = document.getElementById("row2");
+
+  const z1 = document.getElementById("zocalo1");
+  const z2 = document.getElementById("zocalo2");
+
+  const t1 = document.getElementById("text1");
+  const t2 = document.getElementById("text2");
+
+  const logoBox = document.getElementById("logoBox");
+  const logoImg = document.getElementById("logoImg");
+  const logoDivider = document.getElementById("logoDivider");
+
+  let overlayVisible = true;
+
+  function applyFitText(el, maxWidthPx, baseSize) {
+    el.style.fontSize = baseSize + "px";
+    let size = baseSize;
+    while (el.scrollWidth > maxWidthPx && size > 12) {
+      size -= 1;
+      el.style.fontSize = size + "px";
+    }
+  }
+
+  function setRoundedMode(mode) {
+    const cls = mode === "square" ? "square" : "rounded";
+    z1.classList.remove("rounded","square");
+    z2.classList.remove("rounded","square");
+    logoBox.classList.remove("rounded","square");
+
+    z1.classList.add(cls);
+    z2.classList.add(cls);
+    logoBox.classList.add(cls);
+  }
+
+  function setBorder(enabled, color, width) {
+    if (enabled) {
+      z1.style.borderColor = color;
+      z2.style.borderColor = color;
+      logoBox.style.borderColor = color;
+
+      z1.style.borderWidth = width + "px";
+      z2.style.borderWidth = width + "px";
+      logoBox.style.borderWidth = width + "px";
+
+      logoDivider.style.width = width + "px";
+      logoDivider.style.background = color;
+    } else {
+      z1.style.borderWidth = "0px";
+      z2.style.borderWidth = "0px";
+      logoBox.style.borderWidth = "0px";
+      logoDivider.style.width = "0px";
+    }
+  }
+
+  function updatePositions(state) {
+    posLayer.style.left = "50%";
+    posLayer.style.bottom = "80px";
+    posLayer.style.transform = `translateX(-50%) translate(${state.offsetX}px, ${state.offsetY}px)`;
+
+    z1.style.width = state.width1 + "px";
+    z1.style.height = state.height1 + "px";
+
+    z2.style.width = state.width2 + "px";
+    z2.style.height = state.height2 + "px";
+
+    logoBox.style.width = state.height1 + "px";
+    logoBox.style.height = state.height1 + "px";
+    logoBox.style.background = state.bgColor1;
+
+    animLayer.style.flexDirection = (state.text2Attach === "top") ? "column-reverse" : "column";
+
+    row2.style.width = "100%";
+    row2.style.display = "flex";
+
+    if (state.text2Align === "left") row2.style.justifyContent = "flex-start";
+    else if (state.text2Align === "right") row2.style.justifyContent = "flex-end";
+    else row2.style.justifyContent = "center";
+  }
+
+  function updateStyle(state) {
+    z1.style.background = state.bgColor1;
+    z2.style.background = state.bgColor2;
+
+    t1.style.color = state.textColor1;
+    t2.style.color = state.textColor2;
+
+    t1.style.fontFamily = state.fontFamily;
+    t2.style.fontFamily = state.fontFamily;
+
+    setRoundedMode(state.roundedMode);
+    setBorder(state.borderEnabled, state.borderColor, state.borderWidth);
+  }
+
+  function updateTexts(state) {
+    const finalText1 = (state.emoji1 ? state.emoji1 + " " : "") + state.liveText1;
+    const finalText2 = (state.emoji2 ? state.emoji2 + " " : "") + state.liveText2;
+
+    t1.textContent = finalText1;
+    t2.textContent = finalText2;
+
+    applyFitText(t1, state.width1 - 60, state.fontSize1);
+    applyFitText(t2, state.width2 - 40, state.fontSize2);
+  }
+
+  // FIX ANIMACIÓN INVERSA REAL
+  function getAnimClasses(mode) {
+    if (mode === "slideUp") return ["slideUpIn","slideDownOut"];
+    if (mode === "slideRight") return ["slideRightIn","slideLeftOut"];
+    if (mode === "slideLeft") return ["slideLeftIn","slideRightOut"];
+    return ["fadeIn","fadeOut"];
+  }
+
+  function playOverlayAnim(state, turningOn) {
+    const dur = state.animationDuration;
+    animLayer.style.animationDuration = dur + "ms";
+
+    animLayer.classList.remove(
+      "fadeIn","fadeOut",
+      "slideUpIn",
+      "slideDownOut",
+      "slideLeftIn","slideLeftOut",
+      "slideRightIn","slideRightOut"
+    );
+
+    const [inClass,outClass] = getAnimClasses(state.animationMode);
+
+    if (turningOn) {
+      animLayer.style.display = "flex";
+      animLayer.classList.add(inClass);
+      overlayVisible = true;
+    } else {
+      animLayer.classList.add(outClass);
+      setTimeout(() => {
+        animLayer.style.display = "none";
+        overlayVisible = false;
+      }, dur);
+    }
+  }
+
+  function updateLogo(state) {
+    if (state.logoEnabled && state.logoDataUrl) {
+      logoBox.style.display = "flex";
+      logoImg.src = state.logoDataUrl;
+    } else {
+      logoBox.style.display = "none";
+    }
+  }
+
+  function updateText2(state) {
+    if (state.text2Enabled && state.overlayOn) {
+      z2.style.display = "flex";
+    } else {
+      z2.style.display = "none";
+    }
+  }
+
+  ws.onmessage = (e) => {
+    const msg = JSON.parse(e.data);
+    if (msg.type !== "state") return;
+
+    const state = msg.state;
+
+    updateStyle(state);
+    updatePositions(state);
+    updateTexts(state);
+
+    updateLogo(state);
+    updateText2(state);
+
+    if (state.overlayOn && !overlayVisible) playOverlayAnim(state, true);
+    if (!state.overlayOn && overlayVisible) playOverlayAnim(state, false);
+  };
+</script>
+
+</body>
+</html>

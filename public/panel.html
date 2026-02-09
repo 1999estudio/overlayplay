@@ -1,0 +1,870 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>OverlayPLAY Panel - Render Ready</title>
+<style>
+  body { margin:0; background:#0d0f16; font-family:Arial,sans-serif; color:white; }
+
+  header {
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:14px 20px;
+    background:linear-gradient(90deg,#151a2b,#101423);
+    border-bottom:1px solid rgba(255,255,255,0.08);
+  }
+
+  header h1 { font-size:18px; margin:0; letter-spacing:1px; }
+
+  .btn {
+    border:none;
+    padding:10px 14px;
+    border-radius:12px;
+    font-weight:800;
+    cursor:pointer;
+    transition:0.2s;
+    color:white;
+    font-size:13px;
+  }
+  .btn:hover { transform:scale(1.03); }
+
+  .btnBlue { background:#2e6bff; }
+  .btnGreen { background:#16a34a; }
+  .btnRed { background:#dc2626; }
+  .btnGray { background:#334155; }
+  .btnOrange { background:#f59e0b; color:black; font-weight:900; }
+
+  .container { max-width:900px; margin:auto; padding:18px; }
+
+  .tabs { display:flex; gap:10px; margin-bottom:18px; }
+
+  .tab {
+    flex:1;
+    text-align:center;
+    padding:12px;
+    border-radius:14px;
+    background:rgba(255,255,255,0.06);
+    cursor:pointer;
+    font-weight:800;
+    transition:0.2s;
+  }
+
+  .tab.active {
+    background:rgba(46,107,255,0.35);
+    border:1px solid rgba(46,107,255,0.7);
+  }
+
+  .card {
+    background:rgba(255,255,255,0.04);
+    border:1px solid rgba(255,255,255,0.10);
+    border-radius:18px;
+    padding:18px;
+    margin-bottom:18px;
+  }
+
+  .card h2 { margin:0 0 12px 0; font-size:15px; letter-spacing:0.5px; }
+
+  .grid2 { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+
+  .row { display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+
+  input, select {
+    width:100%;
+    padding:10px 12px;
+    border-radius:12px;
+    border:1px solid rgba(255,255,255,0.12);
+    background:rgba(0,0,0,0.35);
+    color:white;
+    outline:none;
+    font-size:14px;
+  }
+
+  label { font-size:12px; opacity:0.85; margin-bottom:4px; display:block; }
+
+  .smallNote { font-size:12px; opacity:0.7; margin-top:8px; }
+
+  .emojiPicker { position: relative; }
+
+  .emojiBtn {
+    width:100%;
+    padding:10px 12px;
+    border-radius:12px;
+    border:1px solid rgba(255,255,255,0.12);
+    background:rgba(0,0,0,0.35);
+    color:white;
+    font-size:14px;
+    cursor:pointer;
+    text-align:left;
+  }
+
+  .emojiGrid {
+    position:absolute;
+    top:110%;
+    left:0;
+    right:0;
+    background:#0b0d14;
+    border:1px solid rgba(255,255,255,0.12);
+    border-radius:14px;
+    padding:10px;
+    display:none;
+    grid-template-columns:repeat(8,1fr);
+    gap:8px;
+    z-index:999;
+    max-height:220px;
+    overflow:auto;
+  }
+
+  .emojiGrid span {
+    font-size:22px;
+    cursor:pointer;
+    text-align:center;
+    padding:6px;
+    border-radius:10px;
+    transition:0.15s;
+  }
+
+  .emojiGrid span:hover {
+    background:rgba(255,255,255,0.12);
+    transform:scale(1.1);
+  }
+
+  .presetRow {
+    display:flex;
+    gap:10px;
+    align-items:center;
+    margin-top:10px;
+  }
+
+  .presetRow input { flex:1; }
+  .presetRow select { flex:1; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>OverlayPLAY - Panel (Render Ready)</h1>
+  <div class="row">
+    <button class="btn btnGray" id="btnCopyObs">🖥 Output OBS</button>
+    <button class="btn btnGray" id="btnCopyPanel">🎮 Panel</button>
+    <button class="btn btnGray" id="btnCopyPanelClean">🎮 Panel Clean</button>
+  </div>
+</header>
+
+<div class="container">
+
+  <div class="tabs">
+    <div class="tab active" id="tabMain">Lower Third</div>
+    <div class="tab" id="tabSettings">Customize</div>
+    <div class="tab" id="tabPresets">Presets</div>
+  </div>
+
+  <div id="pageMain">
+    <div class="card">
+      <h2>Control Principal</h2>
+
+      <div class="grid2">
+        <div>
+          <label>Texto Línea 1 (DRAFT)</label>
+          <input id="draft1" placeholder="Título..." />
+        </div>
+
+        <div>
+          <label>Texto Línea 2 (DRAFT)</label>
+          <input id="draft2" placeholder="Subtítulo..." />
+        </div>
+      </div>
+
+      <div class="grid2" style="margin-top:12px;">
+        <div>
+          <label>Emoji Línea 1</label>
+          <div class="emojiPicker">
+            <div class="emojiBtn" id="emojiBtn1">(Sin emoji)</div>
+            <div class="emojiGrid" id="emojiGrid1"></div>
+          </div>
+        </div>
+
+        <div>
+          <label>Emoji Línea 2</label>
+          <div class="emojiPicker">
+            <div class="emojiBtn" id="emojiBtn2">(Sin emoji)</div>
+            <div class="emojiGrid" id="emojiGrid2"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="row" style="margin-top:14px;">
+        <button class="btn btnBlue" id="btnOverlay">👁 Overlay ON</button>
+        <button class="btn btnOrange" id="btnText2">🧩 Línea 2 ON</button>
+        <button class="btn btnGray" id="btnLogo">🟩 Logo OFF</button>
+        <button class="btn btnGreen" id="btnLive">🚀 PUSH LIVE</button>
+      </div>
+
+      <div class="smallNote">
+        El texto NO sale al aire hasta que toques <b>PUSH LIVE</b>.
+      </div>
+    </div>
+  </div>
+
+  <div id="pageSettings" style="display:none;">
+
+    <div class="card">
+      <h2>Transiciones</h2>
+
+      <div class="grid2">
+        <div>
+          <label>Animación Overlay</label>
+          <select id="animMode">
+            <option value="fade">Fade</option>
+            <option value="slideUp">Slide Up</option>
+            <option value="slideLeft">Slide Left</option>
+            <option value="slideRight">Slide Right</option>
+          </select>
+        </div>
+
+        <div>
+          <label>Duración animación (ms)</label>
+          <select id="animDuration">
+            <option value="200">200</option>
+            <option value="300">300</option>
+            <option value="500" selected>500</option>
+            <option value="700">700</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Tipografía</h2>
+
+      <div class="grid2">
+        <div>
+          <label>Fuente</label>
+          <select id="fontFamily">
+            <option value="Impact">Impact</option>
+            <option value="Arial">Arial</option>
+            <option value="Verdana">Verdana</option>
+            <option value="Tahoma">Tahoma</option>
+            <option value="'Trebuchet MS'">Trebuchet MS</option>
+          </select>
+        </div>
+        <div></div>
+      </div>
+
+      <div class="grid2" style="margin-top:12px;">
+        <div>
+          <label>Tamaño Fuente Línea 1</label>
+          <input id="fontSize1" type="number" value="60"/>
+        </div>
+
+        <div>
+          <label>Tamaño Fuente Línea 2</label>
+          <input id="fontSize2" type="number" value="40"/>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Colores</h2>
+
+      <div class="grid2">
+        <div>
+          <label>Color Fondo Línea 1</label>
+          <input id="bg1" type="color" value="#c40000"/>
+        </div>
+        <div>
+          <label>Color Texto Línea 1</label>
+          <input id="tc1" type="color" value="#ffffff"/>
+        </div>
+      </div>
+
+      <div class="grid2" style="margin-top:12px;">
+        <div>
+          <label>Color Fondo Línea 2</label>
+          <input id="bg2" type="color" value="#111111"/>
+        </div>
+        <div>
+          <label>Color Texto Línea 2</label>
+          <input id="tc2" type="color" value="#ffffff"/>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Forma y Borde</h2>
+
+      <div class="grid2">
+        <div>
+          <label>Forma</label>
+          <select id="roundedMode">
+            <option value="rounded">Redondeado</option>
+            <option value="square">Recto</option>
+          </select>
+        </div>
+
+        <div>
+          <label>Borde ON/OFF</label>
+          <select id="borderEnabled">
+            <option value="true" selected>ON</option>
+            <option value="false">OFF</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="grid2" style="margin-top:12px;">
+        <div>
+          <label>Espesor Borde</label>
+          <input id="borderWidth" type="number" value="4"/>
+        </div>
+
+        <div>
+          <label>Color Borde</label>
+          <input id="borderColor" type="color" value="#ffffff"/>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Tamaños Zócalos (px)</h2>
+
+      <div class="grid2">
+        <div>
+          <label>Width Zócalo 1</label>
+          <input id="w1" type="number" value="1000"/>
+        </div>
+        <div>
+          <label>Height Zócalo 1</label>
+          <input id="h1" type="number" value="120"/>
+        </div>
+      </div>
+
+      <div class="grid2" style="margin-top:12px;">
+        <div>
+          <label>Width Zócalo 2</label>
+          <input id="w2" type="number" value="800"/>
+        </div>
+        <div>
+          <label>Height Zócalo 2</label>
+          <input id="h2" type="number" value="70"/>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Zócalo 2 Posición</h2>
+
+      <div class="grid2">
+        <div>
+          <label>Arriba / Abajo</label>
+          <select id="attach">
+            <option value="top">Arriba</option>
+            <option value="bottom" selected>Abajo</option>
+          </select>
+        </div>
+
+        <div>
+          <label>Left / Center / Right</label>
+          <select id="align">
+            <option value="left">Left</option>
+            <option value="center" selected>Center</option>
+            <option value="right">Right</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Posición General (X/Y)</h2>
+
+      <div class="grid2">
+        <div>
+          <label>Offset X</label>
+          <input id="offX" type="number" value="0"/>
+        </div>
+
+        <div>
+          <label>Offset Y</label>
+          <input id="offY" type="number" value="0"/>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Logo (PNG)</h2>
+      <label>Cargar PNG desde tu PC</label>
+      <input type="file" id="logoFile" accept="image/png" />
+      <div class="smallNote">El logo siempre se escala con el alto del Zócalo 1.</div>
+    </div>
+
+  </div>
+
+  <div id="pagePresets" style="display:none;">
+
+    <div class="card">
+      <h2>Presets de Configuración</h2>
+
+      <label>Nombre del preset</label>
+      <input id="presetName" placeholder="Ej: Programa Noche - Azul" />
+
+      <div class="row">
+        <button class="btn btnGreen" id="btnSavePreset">💾 Guardar Preset</button>
+        <button class="btn btnRed" id="btnDeletePreset">🗑 Borrar Preset</button>
+      </div>
+
+      <div class="presetRow">
+        <select id="presetList"></select>
+        <button class="btn btnBlue" id="btnLoadPreset">▶ Cargar</button>
+      </div>
+
+      <div class="row" style="margin-top:12px;">
+        <button class="btn btnGray" id="btnExportPresets">⬇ Export JSON</button>
+        <input type="file" id="importFile" accept="application/json" />
+        <button class="btn btnGray" id="btnImportPresets">⬆ Import JSON</button>
+      </div>
+
+      <div class="smallNote">
+        Export / Import sirve para pasar presets a Windows o a otra PC.
+      </div>
+    </div>
+
+  </div>
+
+</div>
+
+<script>
+  const ws = new WebSocket(`${location.protocol === "https:" ? "wss" : "ws"}://${location.host}`);
+  let state = null;
+
+  const draft1 = document.getElementById("draft1");
+  const draft2 = document.getElementById("draft2");
+
+  const btnOverlay = document.getElementById("btnOverlay");
+  const btnText2 = document.getElementById("btnText2");
+  const btnLive = document.getElementById("btnLive");
+  const btnLogo = document.getElementById("btnLogo");
+
+  const fontFamily = document.getElementById("fontFamily");
+  const fontSize1 = document.getElementById("fontSize1");
+  const fontSize2 = document.getElementById("fontSize2");
+
+  const animMode = document.getElementById("animMode");
+  const animDuration = document.getElementById("animDuration");
+
+  const bg1 = document.getElementById("bg1");
+  const bg2 = document.getElementById("bg2");
+  const tc1 = document.getElementById("tc1");
+  const tc2 = document.getElementById("tc2");
+
+  const roundedMode = document.getElementById("roundedMode");
+
+  const borderEnabled = document.getElementById("borderEnabled");
+  const borderWidth = document.getElementById("borderWidth");
+  const borderColor = document.getElementById("borderColor");
+
+  const w1 = document.getElementById("w1");
+  const h1 = document.getElementById("h1");
+  const w2 = document.getElementById("w2");
+  const h2 = document.getElementById("h2");
+
+  const attach = document.getElementById("attach");
+  const align = document.getElementById("align");
+
+  const offX = document.getElementById("offX");
+  const offY = document.getElementById("offY");
+
+  const logoFile = document.getElementById("logoFile");
+
+  const tabMain = document.getElementById("tabMain");
+  const tabSettings = document.getElementById("tabSettings");
+  const tabPresets = document.getElementById("tabPresets");
+
+  const pageMain = document.getElementById("pageMain");
+  const pageSettings = document.getElementById("pageSettings");
+  const pagePresets = document.getElementById("pagePresets");
+
+  const btnCopyObs = document.getElementById("btnCopyObs");
+  const btnCopyPanel = document.getElementById("btnCopyPanel");
+  const btnCopyPanelClean = document.getElementById("btnCopyPanelClean");
+
+  const presetName = document.getElementById("presetName");
+  const presetList = document.getElementById("presetList");
+  const btnSavePreset = document.getElementById("btnSavePreset");
+  const btnLoadPreset = document.getElementById("btnLoadPreset");
+  const btnDeletePreset = document.getElementById("btnDeletePreset");
+
+  const btnExportPresets = document.getElementById("btnExportPresets");
+  const btnImportPresets = document.getElementById("btnImportPresets");
+  const importFile = document.getElementById("importFile");
+
+  const emojiBtn1 = document.getElementById("emojiBtn1");
+  const emojiBtn2 = document.getElementById("emojiBtn2");
+  const emojiGrid1 = document.getElementById("emojiGrid1");
+  const emojiGrid2 = document.getElementById("emojiGrid2");
+
+  let selectedEmoji1 = "";
+  let selectedEmoji2 = "";
+
+  const emojis = ["","📢","🎥","📞","🔥","⚽","🎮","⭐","🚨","✅","❌","🎙️","📺","💥","🎬","🏆","🟢","🔴","🟡","📌","🧠","💡","👀","😂","😱","😎","🤝","📍","📲","💰","🕹️","🗣️","🎧","🎵","📰","🚀","⚡"];
+
+  function buildEmojiGrid(grid, btn, which) {
+    grid.innerHTML = "";
+    emojis.forEach(e => {
+      const sp = document.createElement("span");
+      sp.textContent = e === "" ? "🚫" : e;
+      sp.onclick = () => {
+        if (which === 1) selectedEmoji1 = e;
+        if (which === 2) selectedEmoji2 = e;
+
+        btn.textContent = e === "" ? "(Sin emoji)" : e;
+        grid.style.display = "none";
+        sendDraft();
+      };
+      grid.appendChild(sp);
+    });
+  }
+
+  buildEmojiGrid(emojiGrid1, emojiBtn1, 1);
+  buildEmojiGrid(emojiGrid2, emojiBtn2, 2);
+
+  emojiBtn1.onclick = () => {
+    emojiGrid1.style.display = (emojiGrid1.style.display === "grid") ? "none" : "grid";
+    emojiGrid2.style.display = "none";
+  };
+
+  emojiBtn2.onclick = () => {
+    emojiGrid2.style.display = (emojiGrid2.style.display === "grid") ? "none" : "grid";
+    emojiGrid1.style.display = "none";
+  };
+
+  document.addEventListener("click", (e) => {
+    if (!emojiGrid1.contains(e.target) && e.target !== emojiBtn1) emojiGrid1.style.display = "none";
+    if (!emojiGrid2.contains(e.target) && e.target !== emojiBtn2) emojiGrid2.style.display = "none";
+  });
+
+  function showTab(which) {
+    tabMain.classList.remove("active");
+    tabSettings.classList.remove("active");
+    tabPresets.classList.remove("active");
+
+    pageMain.style.display = "none";
+    pageSettings.style.display = "none";
+    pagePresets.style.display = "none";
+
+    if (which === "main") {
+      tabMain.classList.add("active");
+      pageMain.style.display = "block";
+    }
+    if (which === "settings") {
+      tabSettings.classList.add("active");
+      pageSettings.style.display = "block";
+    }
+    if (which === "presets") {
+      tabPresets.classList.add("active");
+      pagePresets.style.display = "block";
+    }
+  }
+
+  tabMain.onclick = () => showTab("main");
+  tabSettings.onclick = () => showTab("settings");
+  tabPresets.onclick = () => showTab("presets");
+
+  function copyLink(path) {
+    const url = `${location.protocol}//${location.hostname}${path}`;
+    navigator.clipboard.writeText(url);
+    alert("Copiado: " + url);
+  }
+
+  btnCopyObs.onclick = () => copyLink("/output.html");
+  btnCopyPanel.onclick = () => copyLink("/panel.html");
+  btnCopyPanelClean.onclick = () => copyLink("/panel_clean.html");
+
+  function sendDraft() {
+    ws.send(JSON.stringify({
+      type: "updateDraft",
+      draftText1: draft1.value,
+      draftText2: draft2.value,
+      emoji1: selectedEmoji1,
+      emoji2: selectedEmoji2
+    }));
+  }
+
+  function sendStyle() {
+    ws.send(JSON.stringify({
+      type: "updateStyle",
+      style: {
+        fontFamily: fontFamily.value,
+        fontSize1: Number(fontSize1.value),
+        fontSize2: Number(fontSize2.value),
+
+        animationMode: animMode.value,
+        animationDuration: Number(animDuration.value),
+
+        bgColor1: bg1.value,
+        bgColor2: bg2.value,
+
+        textColor1: tc1.value,
+        textColor2: tc2.value,
+
+        roundedMode: roundedMode.value,
+
+        borderEnabled: borderEnabled.value === "true",
+        borderWidth: Number(borderWidth.value),
+        borderColor: borderColor.value,
+
+        width1: Number(w1.value),
+        height1: Number(h1.value),
+        width2: Number(w2.value),
+        height2: Number(h2.value),
+
+        text2Attach: attach.value,
+        text2Align: align.value,
+
+        offsetX: Number(offX.value),
+        offsetY: Number(offY.value)
+      }
+    }));
+  }
+
+  draft1.oninput = sendDraft;
+  draft2.oninput = sendDraft;
+
+  [fontFamily,fontSize1,fontSize2,animMode,animDuration,bg1,bg2,tc1,tc2,roundedMode,borderEnabled,borderWidth,borderColor,w1,h1,w2,h2,attach,align,offX,offY].forEach(el => {
+    el.oninput = sendStyle;
+    el.onchange = sendStyle;
+  });
+
+  btnLive.onclick = () => ws.send(JSON.stringify({ type: "pushLive" }));
+  btnOverlay.onclick = () => ws.send(JSON.stringify({ type: "toggleOverlay", overlayOn: !state.overlayOn }));
+  btnText2.onclick = () => ws.send(JSON.stringify({ type: "toggleText2", text2Enabled: !state.text2Enabled }));
+  btnLogo.onclick = () => ws.send(JSON.stringify({ type: "toggleLogo", logoEnabled: !state.logoEnabled }));
+
+  logoFile.onchange = () => {
+    const file = logoFile.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      ws.send(JSON.stringify({ type: "uploadLogo", logoDataUrl: reader.result }));
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const STORAGE_KEY = "overlayplay_presets_render";
+
+  function getPresets() {
+    try {
+      return JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
+    } catch {
+      return {};
+    }
+  }
+
+  function savePresets(obj) {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(obj));
+  }
+
+  function refreshPresetList() {
+    const presets = getPresets();
+    presetList.innerHTML = "";
+    const keys = Object.keys(presets);
+
+    if (keys.length === 0) {
+      const opt = document.createElement("option");
+      opt.value = "";
+      opt.textContent = "(No hay presets)";
+      presetList.appendChild(opt);
+      return;
+    }
+
+    keys.forEach(k => {
+      const opt = document.createElement("option");
+      opt.value = k;
+      opt.textContent = k;
+      presetList.appendChild(opt);
+    });
+  }
+
+  function getCurrentConfigState() {
+    return {
+      fontFamily: state.fontFamily,
+      fontSize1: state.fontSize1,
+      fontSize2: state.fontSize2,
+
+      textColor1: state.textColor1,
+      textColor2: state.textColor2,
+
+      bgColor1: state.bgColor1,
+      bgColor2: state.bgColor2,
+
+      borderEnabled: state.borderEnabled,
+      borderColor: state.borderColor,
+      borderWidth: state.borderWidth,
+
+      roundedMode: state.roundedMode,
+
+      animationMode: state.animationMode,
+      animationDuration: state.animationDuration,
+
+      offsetX: state.offsetX,
+      offsetY: state.offsetY,
+
+      width1: state.width1,
+      height1: state.height1,
+      width2: state.width2,
+      height2: state.height2,
+
+      text2Attach: state.text2Attach,
+      text2Align: state.text2Align,
+
+      logoEnabled: state.logoEnabled,
+      logoDataUrl: state.logoDataUrl
+    };
+  }
+
+  btnSavePreset.onclick = () => {
+    if (!state) return;
+
+    const name = presetName.value.trim();
+    if (!name) {
+      alert("Poné un nombre para el preset.");
+      return;
+    }
+
+    const presets = getPresets();
+    presets[name] = getCurrentConfigState();
+    savePresets(presets);
+    refreshPresetList();
+    alert("Preset guardado: " + name);
+  };
+
+  btnLoadPreset.onclick = () => {
+    const key = presetList.value;
+    if (!key) return;
+
+    const presets = getPresets();
+    const p = presets[key];
+    if (!p) return;
+
+    ws.send(JSON.stringify({ type: "updateStyle", style: p }));
+
+    if (p.logoDataUrl) {
+      ws.send(JSON.stringify({ type: "uploadLogo", logoDataUrl: p.logoDataUrl }));
+    }
+
+    ws.send(JSON.stringify({ type: "toggleLogo", logoEnabled: !!p.logoEnabled }));
+
+    alert("Preset cargado: " + key);
+  };
+
+  btnDeletePreset.onclick = () => {
+    const key = presetList.value;
+    if (!key) return;
+
+    const presets = getPresets();
+    delete presets[key];
+    savePresets(presets);
+    refreshPresetList();
+    alert("Preset eliminado.");
+  };
+
+  // FIX EXPORT JSON REAL (con setTimeout)
+  btnExportPresets.onclick = () => {
+    const presets = getPresets();
+    const jsonString = JSON.stringify(presets, null, 2);
+
+    const blob = new Blob([jsonString], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "overlayplay_presets.json";
+
+    document.body.appendChild(a);
+
+    setTimeout(() => {
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }, 50);
+  };
+
+  btnImportPresets.onclick = () => {
+    const file = importFile.files[0];
+    if (!file) {
+      alert("Seleccioná un archivo JSON primero.");
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const json = JSON.parse(reader.result);
+        savePresets(json);
+        refreshPresetList();
+        alert("Presets importados correctamente.");
+      } catch {
+        alert("Archivo inválido.");
+      }
+    };
+    reader.readAsText(file);
+  };
+
+  refreshPresetList();
+
+  ws.onmessage = (e) => {
+    const msg = JSON.parse(e.data);
+    if (msg.type !== "state") return;
+
+    state = msg.state;
+
+    btnOverlay.textContent = state.overlayOn ? "👁 Overlay ON" : "👁 Overlay OFF";
+    btnOverlay.className = state.overlayOn ? "btn btnBlue" : "btn btnGray";
+
+    btnText2.textContent = state.text2Enabled ? "🧩 Línea 2 ON" : "🧩 Línea 2 OFF";
+    btnText2.className = state.text2Enabled ? "btn btnOrange" : "btn btnGray";
+
+    btnLogo.textContent = state.logoEnabled ? "🟩 Logo ON" : "🟩 Logo OFF";
+    btnLogo.className = state.logoEnabled ? "btn btnGreen" : "btn btnGray";
+
+    if (document.activeElement !== draft1) draft1.value = state.draftText1;
+    if (document.activeElement !== draft2) draft2.value = state.draftText2;
+
+    selectedEmoji1 = state.emoji1 || "";
+    selectedEmoji2 = state.emoji2 || "";
+
+    emojiBtn1.textContent = selectedEmoji1 === "" ? "(Sin emoji)" : selectedEmoji1;
+    emojiBtn2.textContent = selectedEmoji2 === "" ? "(Sin emoji)" : selectedEmoji2;
+
+    fontFamily.value = state.fontFamily;
+    fontSize1.value = state.fontSize1;
+    fontSize2.value = state.fontSize2;
+
+    animMode.value = state.animationMode;
+    animDuration.value = state.animationDuration;
+
+    bg1.value = state.bgColor1;
+    bg2.value = state.bgColor2;
+    tc1.value = state.textColor1;
+    tc2.value = state.textColor2;
+
+    roundedMode.value = state.roundedMode;
+
+    borderEnabled.value = state.borderEnabled ? "true" : "false";
+    borderWidth.value = state.borderWidth;
+    borderColor.value = state.borderColor;
+
+    w1.value = state.width1;
+    h1.value = state.height1;
+    w2.value = state.width2;
+    h2.value = state.height2;
+
+    attach.value = state.text2Attach;
+    align.value = state.text2Align;
+
+    offX.value = state.offsetX;
+    offY.value = state.offsetY;
+  };
+</script>
+
+</body>
+</html>

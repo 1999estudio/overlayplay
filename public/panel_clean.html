@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>OverlayPLAY Panel Clean</title>
+<style>
+  body {
+    margin:0;
+    background:#0d0f16;
+    font-family:Arial,sans-serif;
+    color:white;
+    display:flex;
+    justify-content:center;
+    padding:20px;
+  }
+
+  .wrap {
+    width:520px;
+  }
+
+  h1 {
+    margin:0 0 16px 0;
+    font-size:18px;
+    letter-spacing:1px;
+  }
+
+  .card {
+    background:rgba(255,255,255,0.04);
+    border:1px solid rgba(255,255,255,0.10);
+    border-radius:18px;
+    padding:18px;
+    margin-bottom:18px;
+  }
+
+  label { font-size:12px; opacity:0.85; margin-bottom:4px; display:block; }
+
+  input {
+    width:100%;
+    padding:10px 12px;
+    border-radius:12px;
+    border:1px solid rgba(255,255,255,0.12);
+    background:rgba(0,0,0,0.35);
+    color:white;
+    outline:none;
+    font-size:14px;
+    margin-bottom:10px;
+  }
+
+  .row {
+    display:flex;
+    gap:10px;
+    flex-wrap:wrap;
+  }
+
+  .btn {
+    border:none;
+    padding:10px 14px;
+    border-radius:12px;
+    font-weight:800;
+    cursor:pointer;
+    transition:0.2s;
+    color:white;
+    font-size:13px;
+  }
+
+  .btnBlue { background:#2e6bff; }
+  .btnGreen { background:#16a34a; }
+  .btnGray { background:#334155; }
+  .btnOrange { background:#f59e0b; color:black; font-weight:900; }
+
+  .smallNote { font-size:12px; opacity:0.7; margin-top:8px; }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <h1>OverlayPLAY - Panel Clean</h1>
+
+  <div class="card">
+    <label>Texto Línea 1</label>
+    <input id="draft1" placeholder="Título..." />
+
+    <label>Texto Línea 2</label>
+    <input id="draft2" placeholder="Subtítulo..." />
+
+    <div class="row">
+      <button class="btn btnBlue" id="btnOverlay">👁 Overlay ON</button>
+      <button class="btn btnOrange" id="btnText2">🧩 Línea 2 ON</button>
+      <button class="btn btnGray" id="btnLogo">🟩 Logo OFF</button>
+      <button class="btn btnGreen" id="btnLive">🚀 PUSH LIVE</button>
+    </div>
+
+    <div class="smallNote">
+      PUSH LIVE manda el texto al aire.
+    </div>
+  </div>
+</div>
+
+<script>
+  const ws = new WebSocket(`${location.protocol === "https:" ? "wss" : "ws"}://${location.host}`);
+  let state = null;
+
+  const draft1 = document.getElementById("draft1");
+  const draft2 = document.getElementById("draft2");
+
+  const btnOverlay = document.getElementById("btnOverlay");
+  const btnText2 = document.getElementById("btnText2");
+  const btnLogo = document.getElementById("btnLogo");
+  const btnLive = document.getElementById("btnLive");
+
+  function sendDraft() {
+    ws.send(JSON.stringify({
+      type: "updateDraft",
+      draftText1: draft1.value,
+      draftText2: draft2.value
+    }));
+  }
+
+  draft1.oninput = sendDraft;
+  draft2.oninput = sendDraft;
+
+  btnLive.onclick = () => ws.send(JSON.stringify({ type: "pushLive" }));
+  btnOverlay.onclick = () => ws.send(JSON.stringify({ type: "toggleOverlay", overlayOn: !state.overlayOn }));
+  btnText2.onclick = () => ws.send(JSON.stringify({ type: "toggleText2", text2Enabled: !state.text2Enabled }));
+  btnLogo.onclick = () => ws.send(JSON.stringify({ type: "toggleLogo", logoEnabled: !state.logoEnabled }));
+
+  ws.onmessage = (e) => {
+    const msg = JSON.parse(e.data);
+    if (msg.type !== "state") return;
+
+    state = msg.state;
+
+    btnOverlay.textContent = state.overlayOn ? "👁 Overlay ON" : "👁 Overlay OFF";
+    btnOverlay.className = state.overlayOn ? "btn btnBlue" : "btn btnGray";
+
+    btnText2.textContent = state.text2Enabled ? "🧩 Línea 2 ON" : "🧩 Línea 2 OFF";
+    btnText2.className = state.text2Enabled ? "btn btnOrange" : "btn btnGray";
+
+    btnLogo.textContent = state.logoEnabled ? "🟩 Logo ON" : "🟩 Logo OFF";
+    btnLogo.className = state.logoEnabled ? "btn btnGreen" : "btn btnGray";
+
+    if (document.activeElement !== draft1) draft1.value = state.draftText1;
+    if (document.activeElement !== draft2) draft2.value = state.draftText2;
+  };
+</script>
+
+</body>
+</html>
